@@ -2,8 +2,6 @@ package com.wix.pay.pelecard
 
 import com.google.api.client.http.{ByteArrayContent, GenericUrl, HttpRequest, HttpRequestFactory}
 import com.wix.pay.pelecard.model._
-import org.json4s.DefaultFormats
-import org.json4s.native.Serialization
 
 import scala.concurrent.duration.Duration
 
@@ -12,24 +10,29 @@ class PelecardHttpClient(requestFactory: HttpRequestFactory,
                          readTimeout: Option[Duration] = None,
                          numberOfRetries: Int = 0,
                          endpointUrl: String = Endpoints.production) {
-  private implicit val formats = DefaultFormats
+  private val debitRegularTypeRequestParser = new DebitRegularTypeRequestParser
+  private val debitRegularTypeResponseParser = new DebitRegularTypeResponseParser
+  private val authorizeCreditCardRequestParser = new AuthorizeCreditCardRequestParser
+  private val authorizeCreditCardResponseParser = new AuthorizeCreditCardResponseParser
+  private val convertToTokenRequestParser = new ConvertToTokenRequestParser
+  private val convertToTokenResponseParser = new ConvertToTokenResponseParser
 
   def convertToToken(request: ConvertToTokenRequest): ConvertToTokenResponse = {
-    val requestJson = Serialization.write(request)
+    val requestJson = convertToTokenRequestParser.stringify(request)
     val responseJson = doJsonRequest("ConvertToToken", requestJson)
-    Serialization.read[ConvertToTokenResponse](responseJson)
+    convertToTokenResponseParser.parse(responseJson)
   }
 
   def debitRegularType(request: DebitRegularTypeRequest): DebitRegularTypeResponse = {
-    val requestJson = Serialization.write(request)
+    val requestJson = debitRegularTypeRequestParser.stringify(request)
     val responseJson = doJsonRequest("DebitRegularType", requestJson)
-    Serialization.read[DebitRegularTypeResponse](responseJson)
+    debitRegularTypeResponseParser.parse(responseJson)
   }
 
   def authorizeCreditCard(request: AuthorizeCreditCardRequest): AuthorizeCreditCardResponse = {
-    val requestJson = Serialization.write(request)
+    val requestJson = authorizeCreditCardRequestParser.stringify(request)
     val responseJson = doJsonRequest("AuthorizeCreditCard", requestJson)
-    Serialization.read[AuthorizeCreditCardResponse](responseJson)
+    authorizeCreditCardResponseParser.parse(responseJson)
   }
 
   private def doJsonRequest(resource: String, requestJson: String): String = {
