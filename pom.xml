@@ -3,6 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>libpay-pelecard-all</artifactId>
+    <version>1.0.0-SNAPSHOT</version>
     <packaging>pom</packaging>
     <name>libpay Pelecard payment gateway adapter aggregator</name>
     <description>libpay module for Pelecard payment gateway</description>
