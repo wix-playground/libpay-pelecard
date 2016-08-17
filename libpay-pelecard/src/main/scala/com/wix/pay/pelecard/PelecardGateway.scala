@@ -41,7 +41,7 @@ class PelecardGateway(requestFactory: HttpRequestFactory,
     } match {
       case Success(authorizationKey) => Success(authorizationKey)
       case Failure(e: PaymentException) => Failure(e)
-      case Failure(e) => Failure(new PaymentErrorException(e.getMessage, e))
+      case Failure(e) => Failure(PaymentErrorException(e.getMessage, e))
     }
   }
 
@@ -59,7 +59,7 @@ class PelecardGateway(requestFactory: HttpRequestFactory,
     } match {
       case Success(transactionId) => Success(transactionId)
       case Failure(e: PaymentException) => Failure(e)
-      case Failure(e) => Failure(new PaymentErrorException(e.getMessage, e))
+      case Failure(e) => Failure(PaymentErrorException(e.getMessage, e))
     }
   }
 
@@ -76,7 +76,7 @@ class PelecardGateway(requestFactory: HttpRequestFactory,
     } match {
       case Success(transactionId) => Success(transactionId)
       case Failure(e: PaymentException) => Failure(e)
-      case Failure(e) => Failure(new PaymentErrorException(e.getMessage, e))
+      case Failure(e) => Failure(PaymentErrorException(e.getMessage, e))
     }
   }
 
@@ -119,8 +119,8 @@ class PelecardGateway(requestFactory: HttpRequestFactory,
   private def verifyShvaStatusCode(statusCode: String, errorMessage: String): Unit = {
     statusCode match {
       case StatusCodes.success => // Operation successful.
-      case IsShvaRejectedStatusCode(rejectedStatusCode) => throw new PaymentRejectedException(s"$errorMessage (code = $statusCode)")
-      case _ => throw new PaymentErrorException(s"$errorMessage (code = $statusCode)")
+      case IsShvaRejectedStatusCode(rejectedStatusCode) => throw PaymentRejectedException(s"$errorMessage (code = $statusCode)")
+      case _ => throw PaymentErrorException(s"$errorMessage (code = $statusCode)")
     }
   }
 }
