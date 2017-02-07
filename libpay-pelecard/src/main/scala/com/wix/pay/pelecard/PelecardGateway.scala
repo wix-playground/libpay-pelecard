@@ -22,7 +22,6 @@ class PelecardGateway(requestFactory: HttpRequestFactory,
                       endpointUrl: String = Endpoints.production,
                       merchantParser: PelecardMerchantParser = new JsonPelecardMerchantParser,
                       authorizationParser: PelecardAuthorizationParser = new JsonPelecardAuthorizationParser) extends PaymentGateway {
-  private val helper = new PelecardHelper
   private val pelecard = new PelecardHttpClient(
     requestFactory = requestFactory,
     connectTimeout = connectTimeout,
@@ -52,7 +51,7 @@ class PelecardGateway(requestFactory: HttpRequestFactory,
       val merchant = merchantParser.parse(merchantKey)
       val authorization = authorizationParser.parse(authorizationKey)
 
-      val request = helper.createDebitRegularTypeRequest(merchant, authorization, amount)
+      val request = PelecardHelper.createDebitRegularTypeRequest(merchant, authorization, amount)
       val response = pelecard.debitRegularType(request)
 
       verifyShvaStatusCode(response.StatusCode, response.ErrorMessage)
@@ -71,7 +70,7 @@ class PelecardGateway(requestFactory: HttpRequestFactory,
 
       val merchant = merchantParser.parse(merchantKey)
 
-      val request = helper.createDebitRegularTypeRequest(merchant, creditCard, payment.currencyAmount)
+      val request = PelecardHelper.createDebitRegularTypeRequest(merchant, creditCard, payment.currencyAmount)
       val response = pelecard.debitRegularType(request)
 
       verifyShvaStatusCode(response.StatusCode, response.ErrorMessage)
@@ -100,7 +99,7 @@ class PelecardGateway(requestFactory: HttpRequestFactory,
                         payment: Payment): PelecardAuthorization = {
     val token = tokenize(merchant, creditCard)
 
-    val request = helper.createAuthorizeCreditCardRequest(merchant, creditCard, payment.currencyAmount)
+    val request = PelecardHelper.createAuthorizeCreditCardRequest(merchant, creditCard, payment.currencyAmount)
     val response = pelecard.authorizeCreditCard(request)
 
     verifyShvaStatusCode(response.StatusCode, response.ErrorMessage)
@@ -114,7 +113,7 @@ class PelecardGateway(requestFactory: HttpRequestFactory,
   }
 
   private def tokenize(merchant: PelecardMerchant, creditCard: CreditCard) = {
-    val request = helper.createConvertToTokenRequest(merchant, creditCard)
+    val request = PelecardHelper.createConvertToTokenRequest(merchant, creditCard)
     val response = pelecard.convertToToken(request)
 
     verifyShvaStatusCode(response.StatusCode, response.ErrorMessage)

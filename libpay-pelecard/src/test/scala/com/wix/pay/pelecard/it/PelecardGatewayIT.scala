@@ -48,8 +48,6 @@ class PelecardGatewayIT extends SpecWithJUnit {
       expiration = YearMonth(2020, 12),
       additionalFields = Some(someAdditionalFields))
 
-    private val helper = new PelecardHelper
-
     val someAuthorization = PelecardAuthorization(
       transactionId = "someTransactionId",
       token = "someToken",
@@ -60,19 +58,19 @@ class PelecardGatewayIT extends SpecWithJUnit {
     val someCaptureAmount = 11.1
 
     def aDebitRegularTypeRequest(): DebitRegularTypeRequest = {
-      helper.createDebitRegularTypeRequest(someMerchant, someCreditCard, somePayment.currencyAmount)
+      PelecardHelper.createDebitRegularTypeRequest(someMerchant, someCreditCard, somePayment.currencyAmount)
     }
 
     def aDebitRegularTypeRequestPostAuthorize(): DebitRegularTypeRequest = {
-      helper.createDebitRegularTypeRequest(someMerchant, someAuthorization, someCaptureAmount)
+      PelecardHelper.createDebitRegularTypeRequest(someMerchant, someAuthorization, someCaptureAmount)
     }
 
     def anAuthorizeCreditCardRequest(): AuthorizeCreditCardRequest = {
-      helper.createAuthorizeCreditCardRequest(someMerchant, someCreditCard, somePayment.currencyAmount)
+      PelecardHelper.createAuthorizeCreditCardRequest(someMerchant, someCreditCard, somePayment.currencyAmount)
     }
 
     def aConvertToTokenRequest(): ConvertToTokenRequest = {
-      helper.createConvertToTokenRequest(someMerchant, someCreditCard)
+      PelecardHelper.createConvertToTokenRequest(someMerchant, someCreditCard)
     }
 
     private def aSuccessfulResultData(withAuthorizationNumber: Boolean = false,

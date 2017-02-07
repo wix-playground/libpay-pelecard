@@ -1,11 +1,11 @@
 package com.wix.pay.pelecard
 
 import com.wix.pay.creditcard.CreditCard
+import com.wix.pay.model.CurrencyAmount
 import com.wix.pay.pelecard.model.Conversions._
 import com.wix.pay.pelecard.model._
-import com.wix.pay.model.CurrencyAmount
 
-class PelecardHelper {
+object PelecardHelper {
   def createDebitRegularTypeRequest(merchant: PelecardMerchant, creditCard: CreditCard,
                                     currencyAmount: CurrencyAmount): DebitRegularTypeRequest = {
     DebitRegularTypeRequest(
