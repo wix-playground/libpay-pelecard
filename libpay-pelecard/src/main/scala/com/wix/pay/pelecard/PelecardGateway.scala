@@ -31,11 +31,13 @@ class PelecardGateway(requestFactory: HttpRequestFactory,
     endpointUrl = endpointUrl
   )
 
-  override def authorize(merchantKey: String, creditCard: CreditCard, currencyAmount: CurrencyAmount, customer: Option[Customer], deal: Option[Deal]): Try[String] = {
+  override def authorize(merchantKey: String, creditCard: CreditCard, payment: Payment, customer: Option[Customer], deal: Option[Deal]): Try[String] = {
     Try {
+      require(payment.installments == 1, "Installments are not implemented")
+
       val merchant = merchantParser.parse(merchantKey)
 
-      val authorization = authorize(merchant, creditCard, currencyAmount)
+      val authorization = authorize(merchant, creditCard, payment)
 
       authorizationParser.stringify(authorization)
     } match {
@@ -63,11 +65,13 @@ class PelecardGateway(requestFactory: HttpRequestFactory,
     }
   }
 
-  override def sale(merchantKey: String, creditCard: CreditCard, currencyAmount: CurrencyAmount, customer: Option[Customer], deal: Option[Deal]): Try[String] = {
+  override def sale(merchantKey: String, creditCard: CreditCard, payment: Payment, customer: Option[Customer], deal: Option[Deal]): Try[String] = {
     Try {
+      require(payment.installments == 1, "Installments are not implemented")
+
       val merchant = merchantParser.parse(merchantKey)
 
-      val request = helper.createDebitRegularTypeRequest(merchant, creditCard, currencyAmount)
+      val request = helper.createDebitRegularTypeRequest(merchant, creditCard, payment.currencyAmount)
       val response = pelecard.debitRegularType(request)
 
       verifyShvaStatusCode(response.StatusCode, response.ErrorMessage)
@@ -91,11 +95,12 @@ class PelecardGateway(requestFactory: HttpRequestFactory,
     }
   }
 
-  private def authorize(merchant: PelecardMerchant, creditCard: CreditCard,
-                        currencyAmount: CurrencyAmount): PelecardAuthorization = {
+  private def authorize(merchant: PelecardMerchant,
+                        creditCard: CreditCard,
+                        payment: Payment): PelecardAuthorization = {
     val token = tokenize(merchant, creditCard)
 
-    val request = helper.createAuthorizeCreditCardRequest(merchant, creditCard, currencyAmount)
+    val request = helper.createAuthorizeCreditCardRequest(merchant, creditCard, payment.currencyAmount)
     val response = pelecard.authorizeCreditCard(request)
 
     verifyShvaStatusCode(response.StatusCode, response.ErrorMessage)
@@ -119,7 +124,7 @@ class PelecardGateway(requestFactory: HttpRequestFactory,
   private def verifyShvaStatusCode(statusCode: String, errorMessage: String): Unit = {
     statusCode match {
       case StatusCodes.success => // Operation successful.
-      case IsShvaRejectedStatusCode(rejectedStatusCode) => throw PaymentRejectedException(s"$errorMessage (code = $statusCode)")
+      case IsShvaRejectedStatusCode(rejectedStatusCode) => throw PaymentRejectedException(s"$errorMessage (code = $rejectedStatusCode)")
       case _ => throw PaymentErrorException(s"$errorMessage (code = $statusCode)")
     }
   }

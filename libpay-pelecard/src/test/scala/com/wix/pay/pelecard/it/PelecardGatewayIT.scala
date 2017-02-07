@@ -3,7 +3,7 @@ package com.wix.pay.pelecard.it
 
 import com.google.api.client.http.javanet.NetHttpTransport
 import com.wix.pay.creditcard.{CreditCard, CreditCardOptionalFields, YearMonth}
-import com.wix.pay.model.CurrencyAmount
+import com.wix.pay.model.{CurrencyAmount, Payment}
 import com.wix.pay.pelecard.PelecardMatchers._
 import com.wix.pay.pelecard.model._
 import com.wix.pay.pelecard.testkit.PelecardDriver
@@ -39,7 +39,7 @@ class PelecardGatewayIT extends SpecWithJUnit {
     )
     val merchantKey = merchantParser.stringify(someMerchant)
 
-    val someCurrencyAmount = CurrencyAmount("ILS", 33.3)
+    val somePayment = Payment(currencyAmount = CurrencyAmount("ILS", 33.3))
     val someAdditionalFields = CreditCardOptionalFields.withFields(
       csc = Some("123"),
       holderId = Some("some holder ID"))
@@ -60,7 +60,7 @@ class PelecardGatewayIT extends SpecWithJUnit {
     val someCaptureAmount = 11.1
 
     def aDebitRegularTypeRequest(): DebitRegularTypeRequest = {
-      helper.createDebitRegularTypeRequest(someMerchant, someCreditCard, someCurrencyAmount)
+      helper.createDebitRegularTypeRequest(someMerchant, someCreditCard, somePayment.currencyAmount)
     }
 
     def aDebitRegularTypeRequestPostAuthorize(): DebitRegularTypeRequest = {
@@ -68,7 +68,7 @@ class PelecardGatewayIT extends SpecWithJUnit {
     }
 
     def anAuthorizeCreditCardRequest(): AuthorizeCreditCardRequest = {
-      helper.createAuthorizeCreditCardRequest(someMerchant, someCreditCard, someCurrencyAmount)
+      helper.createAuthorizeCreditCardRequest(someMerchant, someCreditCard, somePayment.currencyAmount)
     }
 
     def aConvertToTokenRequest(): ConvertToTokenRequest = {
@@ -146,7 +146,7 @@ class PelecardGatewayIT extends SpecWithJUnit {
       pelecard.sale(
         merchantKey = merchantKey,
         creditCard = someCreditCard,
-        currencyAmount = someCurrencyAmount
+        payment = somePayment
       ) must beAFailedTry(
         check = beAnInstanceOf[PaymentRejectedException]
       )
@@ -160,7 +160,7 @@ class PelecardGatewayIT extends SpecWithJUnit {
       pelecard.sale(
         merchantKey = merchantKey,
         creditCard = someCreditCard,
-        currencyAmount = someCurrencyAmount
+        payment = somePayment
       ) must beASuccessfulTry(
         check = ===(someAuthorization.transactionId)
       )
@@ -180,7 +180,7 @@ class PelecardGatewayIT extends SpecWithJUnit {
       pelecard.authorize(
         merchantKey = merchantKey,
         creditCard = someCreditCard,
-        currencyAmount = someCurrencyAmount
+        payment = somePayment
       ) must beAFailedTry(
         check = beAnInstanceOf[PaymentRejectedException]
       )
@@ -198,7 +198,7 @@ class PelecardGatewayIT extends SpecWithJUnit {
       pelecard.authorize(
         merchantKey = merchantKey,
         creditCard = someCreditCard,
-        currencyAmount = someCurrencyAmount
+        payment = somePayment
       ) must beASuccessfulTry(
         check = beAuthorizationKey(
           authorization = beAuthorization(
