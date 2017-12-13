@@ -1,13 +1,17 @@
 package com.wix.pay.pelecard.testkit
 
-import com.wix.hoopoe.http.testkit.EmbeddedHttpProbe
+
+import akka.http.scaladsl.model.Uri.Path
+import akka.http.scaladsl.model._
+import com.wix.e2e.http.api.StubWebServer
+import com.wix.e2e.http.client.extractors.HttpMessageExtractors._
+import com.wix.e2e.http.server.WebServerFactory.aStubWebServer
 import com.wix.pay.pelecard._
 import com.wix.pay.pelecard.model._
-import spray.http._
 
 
 class PelecardDriver(port: Int) {
-  private val probe = new EmbeddedHttpProbe(port, EmbeddedHttpProbe.NotFoundHandler)
+  private val server: StubWebServer = aStubWebServer.onPort(port).build
 
   private val debitRegularTypeRequestParser = new DebitRegularTypeRequestParser
   private val debitRegularTypeResponseParser = new DebitRegularTypeResponseParser
@@ -16,17 +20,9 @@ class PelecardDriver(port: Int) {
   private val convertToTokenRequestParser = new ConvertToTokenRequestParser
   private val convertToTokenResponseParser = new ConvertToTokenResponseParser
 
-  def startProbe() {
-    probe.doStart()
-  }
-
-  def stopProbe() {
-    probe.doStop()
-  }
-
-  def resetProbe() {
-    probe.handlers.clear()
-  }
+  def start(): Unit = server.start()
+  def stop(): Unit = server.stop()
+  def reset(): Unit = server.replaceWith()
 
   def aDebitRegularTypeRequestFor(request: DebitRegularTypeRequest): DebitRegularTypeRequestCtx = {
     new DebitRegularTypeRequestCtx(
@@ -47,34 +43,32 @@ class PelecardDriver(port: Int) {
   }
 
   abstract class Ctx(val resource: String) {
-    def isStubbedRequestEntity(entity: HttpEntity, headers: List[HttpHeader]): Boolean = {
+    def isStubbedRequestEntity(entity: HttpEntity, headers: Seq[HttpHeader]): Boolean = {
       isAuthorized(headers) && verifyContent(entity)
     }
 
-    private def isAuthorized(headers: List[HttpHeader]): Boolean = {
-      true
-    }
+    private def isAuthorized(headers: Seq[HttpHeader]): Boolean = true
 
     def verifyContent(entity: HttpEntity): Boolean
 
     protected def returns(statusCode: StatusCode, responseJson: String): Unit = {
-      probe.handlers += {
+      server.appendAll {
         case HttpRequest(
-        HttpMethods.POST,
-        Uri.Path(`resource`),
-        headers,
-        entity,
-        _) if isStubbedRequestEntity(entity, headers) =>
-          HttpResponse(
-            status = statusCode,
-            entity = HttpEntity(ContentTypes.`application/json`, responseJson))
+          HttpMethods.POST,
+          Path(`resource`),
+          headers,
+          entity,
+          _) if isStubbedRequestEntity(entity, headers) =>
+            HttpResponse(
+              status = statusCode,
+              entity = HttpEntity(ContentTypes.`application/json`, responseJson))
       }
     }
   }
 
   class DebitRegularTypeRequestCtx(request: DebitRegularTypeRequest) extends Ctx("/DebitRegularType") {
     override def verifyContent(entity: HttpEntity): Boolean = {
-      val actualRequest = debitRegularTypeRequestParser.parse(entity.asString)
+      val actualRequest = debitRegularTypeRequestParser.parse(entity.extractAsString)
       request == actualRequest
     }
 
@@ -85,7 +79,7 @@ class PelecardDriver(port: Int) {
 
   class AuthorizeCreditCardRequestCtx(request: AuthorizeCreditCardRequest) extends Ctx("/AuthorizeCreditCard") {
     override def verifyContent(entity: HttpEntity): Boolean = {
-      val actualRequest = authorizeCreditCardRequestParser.parse(entity.asString)
+      val actualRequest = authorizeCreditCardRequestParser.parse(entity.extractAsString)
       request == actualRequest
     }
 
@@ -96,7 +90,7 @@ class PelecardDriver(port: Int) {
 
   class ConvertToTokenRequestCtx(request: ConvertToTokenRequest) extends Ctx("/ConvertToToken") {
     override def verifyContent(entity: HttpEntity): Boolean = {
-      val actualRequest = convertToTokenRequestParser.parse(entity.asString)
+      val actualRequest = convertToTokenRequestParser.parse(entity.extractAsString)
       request == actualRequest
     }
 
